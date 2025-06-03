@@ -1,4 +1,3 @@
-```markdown
 # Multi-Task Learning and Knowledge Distillation for Human Activity Recognition (HAR)
 
 This project explores various deep learning techniques to tackle the Human Activity Recognition (HAR) problem using sensor data. The primary focus is on comparing Single-Task Learning, Multi-Task Learning, and several Self-Distillation techniques to improve model performance and generalization.
