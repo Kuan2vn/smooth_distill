@@ -1,29 +1,29 @@
-# Multi-Task Learning and Knowledge Distillation for Human Activity Recognition (HAR)
+# Official Pytorch Implementation for Smooth-Distill
 
-This project explores various deep learning techniques to tackle the Human Activity Recognition (HAR) problem using sensor data. The primary focus is on comparing Single-Task Learning, Multi-Task Learning, and several Self-Distillation techniques to improve model performance and generalization.
+This repository contains the official source code and experimental setup for the research paper introducing **Smooth-Distill**, a novel self-distillation framework for multitask learning with wearable sensor data.
 
 ---
 ## Overview
 
-Human Activity Recognition is a critical field in ubiquitous computing. This project implements and evaluates several Convolutional Neural Network (CNN) architectures to simultaneously classify two related tasks:
-1.  **Posture/Activity**: The activity being performed by the user (e.g., walking, running, standing).
-2.  **Sensor Position**: The location of the sensor on the body (e.g., chest, ankle, arm).
+This project introduces **Smooth-Distill**, a novel self-distillation framework designed to enhance multitask learning (MTL) for applications using wearable accelerometer data. The core of this research addresses two simultaneous tasks: **human activity recognition (HAR)**, which includes a detailed set of sleep postures, and **device placement detection**.
 
-The project further investigates advanced techniques such as Cross-Task Learning and Self-Distillation methods (SDD, Smooth Distillation) to determine if information sharing between tasks or self-learning can yield better results compared to baseline approaches.
+The framework is built upon **MTL-net**, a CNN-based architecture tailored for time-series data, which processes sensor input and branches into two separate outputs for each respective task. Unlike traditional knowledge distillation methods that require a large, pre-trained teacher model, Smooth-Distill employs a smoothed, historical version of the model itself as the teacher. This approach significantly reduces computational overhead during training while delivering substantial performance benefits.
+
+To validate our findings, we conducted experiments on two public datasets, **MHealth** and **WISDM**, and introduced a new comprehensive dataset capturing 12 distinct sleep postures across three different on-body sensor positions. The experimental results demonstrate that Smooth-Distill consistently outperforms baseline and alternative approaches, offering improved accuracy, more stable convergence, and reduced overfitting. This repository provides all the necessary code to replicate our results and explore the framework further.
 
 ---
 ## Key Features
 
-* **Multi-Dataset Support**: Easily handles and integrates popular HAR datasets like MHealth, WISDM, and a custom dataset ("Sleep").
-* **Preprocessing Pipeline**: Provides scripts to automate raw data processing, sequence generation, and train/test splitting.
-* **Multiple Model Implementations**:
+* **Novel Framework**: Official implementation of the **Smooth-Distill** framework.
+* **Multi-Dataset Support**: Easily handles and integrates popular HAR datasets like **MHealth**, **WISDM**, and the new **Sleep** posture dataset.
+* **Multiple Model Implementations for Comparison**:
     * Single-Task Learning (STL) Baseline
     * Multi-Task Learning (MTL) with Hard Parameter Sharing
     * Cross-Task Learning with Contrastive Loss
     * Multi-Task Learning with Self-Distillation via Dropout (SDD)
-    * Smooth Self-Distillation (Mean Teacher)
-* **K-Fold Cross-Validation**: Ensures robust and reliable model evaluation by splitting the training data into `N_FOLDS` for validation.
-* **Experiment Tracking**: Automatically saves results, best model weights, and training plots for each run into a structured directory.
+    * **Smooth-Distill** (Mean Teacher)
+* **K-Fold Cross-Validation**: Ensures robust and reliable model evaluation.
+* **Reproducibility**: Provides a complete pipeline from data preprocessing to training and evaluation for full reproducibility of the paper's results.
 
 ---
 ## Project Structure
@@ -62,7 +62,7 @@ cd <your-repository-directory>
 **2. Install dependencies:**
 This project requires the following Python libraries. It is recommended to use a virtual environment.
 ```bash
-pip install torch numpy pandas scikit-learn matplotlib tqdm
+pip install -r requirements.txt
 ```
 
 **3. Prepare the data:**
@@ -82,49 +82,41 @@ pip install torch numpy pandas scikit-learn matplotlib tqdm
 ---
 ## How to Run Experiments
 
-Once the data is prepared, you can run the various training scripts. Results will be saved in the `@result/` directory.
+Once the data is prepared, you can run the various training scripts to reproduce the results from the paper. Results will be saved in the `@result/` directory.
 
 ### 1. Train Single-Task Models (Baseline)
 
-Trains a separate model for each task.
 ```bash
-# Train for Task 1 (e.g., posture) on the 'har' dataset
-python singletask_train.py --dataset har --task 0 --num_epochs 50 --seed 42
+# Train for Task 1 (HAR) on the 'wisdm' dataset
+python singletask_train.py --dataset wisdm --task 0 --num_epochs 50 --seed 42
 
-# Train for Task 2 (e.g., position) on the 'har' dataset
-python singletask_train.py --dataset har --task 1 --num_epochs 50 --seed 42
+# Train for Task 2 (Position) on the 'wisdm' dataset
+python singletask_train.py --dataset wisdm --task 1 --num_epochs 50 --seed 42
 ```
-* `--task`: Selects the task to train (0 for task 1, 1 for task 2).
 
-### 2. Train the Multi-Task Model
+### 2. Train the Multi-Task Model (Baseline)
 
-Trains a single model for both tasks using hard parameter sharing.
 ```bash
-python multitask_train.py --dataset har --alpha 0.5 --num_epochs 50 --seed 42
+python multitask_train.py --dataset wisdm --alpha 0.5 --num_epochs 50 --seed 42
 ```
-* `--alpha`: The weight for the task 1 loss function. Total Loss = $\alpha \cdot \text{loss}_1 + (1-\alpha) \cdot \text{loss}_2$.
 
 ### 3. Train the Cross-Task Model
 
-Uses a Cross-Stitch unit and a contrastive loss.
 ```bash
-python crosstask_train.py --dataset har --tau_value 0.7 --num_epochs 50 --seed 42
+python crosstask_train.py --dataset wisdm --tau_value 0.7 --num_epochs 50 --seed 42
 ```
-* `--tau_value`: The temperature parameter `tau` for the `cross_task_contrastive_loss` function.
 
 ### 4. Train with Self-Distillation via Dropout (SDD)
 
-Uses dropout to create different "views" of the model and enforces consistency between them.
 ```bash
-python multitask_sdd_train.py --dataset har --alpha 0.5 --loss 2 --num_epochs 50 --seed 42
+python multitask_sdd_train.py --dataset wisdm --alpha 0.5 --loss 2 --num_epochs 50 --seed 42
 ```
-* `--loss`: Selects the total loss calculation method (1: combined, 2: separate per task).
 
-### 5. Train with Smooth Self-Distillation (Mean Teacher)
+### 5. Train with Smooth-Distill (Proposed Method)
 
-Uses a "teacher" model, updated via Exponential Moving Average (EMA), to guide the "student" model.
+This script trains the model using the Smooth Self-Distillation (Mean Teacher) framework.
 ```bash
-python smooth_distill_train.py --dataset har --alpha 0.5 --lambda_kd 0.5 --num_epochs 50 --seed 42
+python smooth_distill_train.py --dataset wisdm --alpha 0.5 --lambda_kd 0.5 --num_epochs 50 --seed 42
 ```
 * `--lambda_kd`: The weight for the knowledge distillation loss (KL Divergence).
 
@@ -136,4 +128,3 @@ All experiment artifacts are saved under `@result/<dataset_name>/<experiment_typ
 * `fold<N>_best_model.pth`: The weights of the model with the best validation accuracy for fold N.
 * `fold<N>_curve.json`: The loss and accuracy data for each epoch of fold N.
 * `*.png`: Plots visualizing the training process for each fold.
-```
